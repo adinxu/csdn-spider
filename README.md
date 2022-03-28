@@ -1,3 +1,10 @@
+## 写在前面@adinxu
+此仓库在原仓库基础上修改，爬取csdn博客，用于迁移文章至jekll搭建的github pages个人博客下。  
+目标：
+- [x] 修改文章命名为：xxxx-xx-xx-title.markdown格式
+- [x] 为每篇文章添加yaml头信息
+- [ ] 转化markdown效果优化
+- [ ] 记录爬取的博客，可以定时同步
 # CSDN 爬虫
 
 > 主要功能：爬取 csdn 博客指定用户的所有博文并转换为 markdown 格式保存到本地。
