@@ -62,10 +62,17 @@ class CSDN(object):
 		self.TaskQueue = list()
 		self.folder_name = folder_name
 		self.url_num = 1
+		self.title=''
+		self.nickname=''
+		self.cdate=''
+		self.ctime=''
+		self.classify=[]
+		self.tags=[]
 
 	def start(self):
 		num = 0
 		articles = [None]
+		#访问文章列表页面，获取每页包含的文章
 		while len(articles) > 0:
 			num += 1
 			url = u'https://blog.csdn.net/' + self.username + '/article/list/' + str(num)
@@ -73,8 +80,9 @@ class CSDN(object):
 			html = response.text
 			soup = BeautifulSoup(html, "html.parser")
 			articles = soup.find_all('div', attrs={"class":"article-item-box csdn-tracking-statistics"})
+			gettitle=re.compile("(?<= )\S+")
 			for article in articles:
-				article_title = article.a.text.strip().replace('        ','：')
+				article_title = gettitle.search(article.a.text).group()
 				article_href = article.a['href']
 				self.TaskQueue.append((article_title, article_href))
 	
@@ -83,6 +91,20 @@ class CSDN(object):
 		html = response.text
 		soup = BeautifulSoup(html, 'lxml')
 		content = soup.select_one("#mainBox > main > div.blog-content-box")
+		self.title=soup.select_one("h1.title-article").string
+		self.title = re.sub(r'[_\/:*?"<>|\n]','-', self.title)
+		self.nickname=soup.select_one("a.follow-nickName").string
+		createtime=soup.select_one("span.time").string
+		self.cdate=re.search("\d\d\d\d-\d\d-\d\d",createtime).group()
+		self.ctime=re.search("\d\d:\d\d:\d\d",createtime).group()
+		candt=soup.select("a.tag-link") 
+		self.classify.clear()
+		self.tags.clear()
+		for t in candt:
+			if t.has_attr('data-report-click'):
+				self.tags.append(t.string)
+			else:
+				self.classify.append(t.string)
 		# 删除注释
 		for useless_tag in content(text=lambda text: isinstance(text, Comment)):
 			useless_tag.extract()
@@ -95,8 +117,18 @@ class CSDN(object):
 		# 删除空白标签
 		eles_except = ["img", "br", "hr"]
 		delete_blank_ele(content, eles_except)
+		#添加头信息
+		md = '-'*3+'\n'
+		md += "title: {}\n".format(self.title)
+		md += "categories:\n"
+		for cla in self.classify:
+			md += "  - {}\n".format(cla)
+		md += "tags:\n"
+		for tag in self.tags:
+			md += "  - {}\n".format(tag)
+		md += '-'*3+'\n'
 		# 转换为markdown
-		md = Tomd(str(content)).markdown
+		md += Tomd(str(content)).markdown
 		return md
 
 	def write_readme(self):
@@ -117,17 +149,14 @@ class CSDN(object):
 	def get_all_articles(self):
 		while len(self.TaskQueue) > 0:
 			(article_title,article_href) = self.TaskQueue.pop()
-			file_name = re.sub(r'[\/:：*?"<>|\n]','-', article_title) + ".md"
+			md = self.get_md(article_href)
+			print("[++++] 正在处理URL:{}".format(article_href))
+			#适配jekll文件名
+			file_name = self.cdate + '-' + self.title + ".md"
 			artical_path = result_file(folder_username=self.username, file_name=file_name, folder_name=self.folder_name)
-
-			md_head = "# " + article_title + "\n"
-			md = md_head + self.get_md(article_href)
-			print("[++++] 正在处理URL：{}".format(article_href))
 			with open(artical_path, "w", encoding="utf-8") as artical_file:
 				artical_file.write(md)
 			self.url_num += 1
-
-
 
 def spider(username: str, cookie_path:str, folder_name: str = "blog"):
 	if not os.path.exists(folder_name):
