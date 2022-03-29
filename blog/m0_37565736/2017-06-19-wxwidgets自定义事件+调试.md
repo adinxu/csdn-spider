@@ -8,6 +8,7 @@ tags:
   - 自定义
   - 事件
 ---
+{% include toc %}
 
 # wxwidgets自定义事件+调试
 

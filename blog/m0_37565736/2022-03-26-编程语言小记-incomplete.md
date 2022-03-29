@@ -5,6 +5,7 @@ categories:
 tags:
   - 编程语言
 ---
+{% include toc %}
 
 # 编程语言小记_incomplete
 

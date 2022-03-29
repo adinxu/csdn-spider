@@ -9,6 +9,7 @@ tags:
   - bitmap
   - 接收
 ---
+{% include toc %}
 
 # 用OpenCv转换原始图像数据到wximage
 

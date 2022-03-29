@@ -7,6 +7,8 @@ import requests
 from bs4 import BeautifulSoup, Comment
 from .tomd import Tomd
 
+dbg_flag = False
+
 
 def result_file(folder_username, file_name, folder_name):
 	folder = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", folder_name, folder_username)
@@ -61,7 +63,6 @@ class CSDN(object):
 		self.username = username
 		self.TaskQueue = list()
 		self.folder_name = folder_name
-		self.url_num = 1
 		self.title=''
 		self.nickname=''
 		self.cdate=''
@@ -70,21 +71,26 @@ class CSDN(object):
 		self.tags=[]
 
 	def start(self):
-		num = 0
-		articles = [None]
-		#访问文章列表页面，获取每页包含的文章
-		while len(articles) > 0:
-			num += 1
-			url = u'https://blog.csdn.net/' + self.username + '/article/list/' + str(num)
-			response = self.s.get(url=url, headers=self.headers)
-			html = response.text
-			soup = BeautifulSoup(html, "html.parser")
-			articles = soup.find_all('div', attrs={"class":"article-item-box csdn-tracking-statistics"})
-			gettitle=re.compile("(?<= )\S+")
-			for article in articles:
-				article_title = gettitle.search(article.a.text).group()
-				article_href = article.a['href']
-				self.TaskQueue.append((article_title, article_href))
+		global dbg_flag
+		if not dbg_flag:
+			num = 0
+			articles = [None]
+			#访问文章列表页面，获取每页包含的文章
+			while len(articles) > 0:
+				num += 1
+				url = u'https://blog.csdn.net/' + self.username + '/article/list/' + str(num)
+				response = self.s.get(url=url, headers=self.headers)
+				html = response.text
+				soup = BeautifulSoup(html, "html.parser")
+				articles = soup.find_all('div', attrs={"class":"article-item-box csdn-tracking-statistics"})
+				gettitle=re.compile("(?<= )\S+")
+				for article in articles:
+					article_title = gettitle.search(article.a.text).group()
+					article_href = article.a['href']
+					self.TaskQueue.append((article_title, article_href))
+		else:
+			#调试单篇文章的获取内容
+			self.TaskQueue.append(("重定向与管道符", "https://blog.csdn.net/m0_37565736/article/details/80385398"))
 	
 	def get_md(self, url):
 		response = self.s.get(url=url, headers=self.headers)
@@ -127,36 +133,44 @@ class CSDN(object):
 		for tag in self.tags:
 			md += "  - {}\n".format(tag)
 		md += '-'*3+'\n'
+		#添加目录
+		md += '{% include toc %}\n'
 		# 转换为markdown
 		md += Tomd(str(content)).markdown
 		return md
 
 	def write_readme(self):
-		print("+"*100)
-		print("[++] 开始爬取 {} 的博文 ......".format(self.username))
-		print("+"*100)
-		reademe_path = result_file(self.username,file_name="README.md",folder_name=self.folder_name)
-		with open(reademe_path,'w', encoding='utf-8') as reademe_file:
-			readme_head = "# " + self.username + " 的博文\n"
-			reademe_file.write(readme_head)
-			self.TaskQueue.reverse()
-			for (article_title,article_href) in self.TaskQueue:
-					text = str(self.url_num) + '. [' + article_title + ']('+ article_href +')\n'
-					reademe_file.write(text)
-					self.url_num += 1
-		self.url_num = 1
+		global dbg_flag
+		if not dbg_flag:
+			print("+"*100)
+			print("[++] 开始爬取 {} 的博文 ......".format(self.username))
+			print("+"*100)
+			reademe_path = result_file(self.username,file_name="README.md",folder_name=self.folder_name)
+			url_num=1
+			with open(reademe_path,'w', encoding='utf-8') as reademe_file:
+				readme_head = "# " + self.username + " 的博文\n"
+				reademe_file.write(readme_head)
+				self.TaskQueue.reverse()
+				for (article_title,article_href) in self.TaskQueue:
+						text = str(url_num) + '. [' + article_title + ']('+ article_href +')\n'
+						reademe_file.write(text)
+						url_num += 1
+		else:
+			pass
 	
 	def get_all_articles(self):
+		listlen=list(self.TaskQueue)
+		currnum=1
 		while len(self.TaskQueue) > 0:
 			(article_title,article_href) = self.TaskQueue.pop()
 			md = self.get_md(article_href)
-			print("[++++] 正在处理URL:{}".format(article_href))
 			#适配jekll文件名
 			file_name = self.cdate + '-' + self.title + ".md"
+			print("[++++] 正在第{0}/{1}处理文章:{2}".format(currnum,listlen,file_name))
 			artical_path = result_file(folder_username=self.username, file_name=file_name, folder_name=self.folder_name)
 			with open(artical_path, "w", encoding="utf-8") as artical_file:
 				artical_file.write(md)
-			self.url_num += 1
+			currnum+=1
 
 def spider(username: str, cookie_path:str, folder_name: str = "blog"):
 	if not os.path.exists(folder_name):

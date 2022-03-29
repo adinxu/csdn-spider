@@ -5,6 +5,7 @@ categories:
 tags:
   - c/c++
 ---
+{% include toc %}
 
 # C/C++复习回忆整理_incomplete
 

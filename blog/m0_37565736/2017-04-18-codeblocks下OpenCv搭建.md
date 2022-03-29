@@ -5,6 +5,7 @@ categories:
   - opencv
 tags:
 ---
+{% include toc %}
 
 # codeblocks下OpenCv搭建
 

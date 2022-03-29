@@ -10,6 +10,7 @@ tags:
   - 转换
   - 数组
 ---
+{% include toc %}
 
 # OpenCv+wxwidgets尝试
 

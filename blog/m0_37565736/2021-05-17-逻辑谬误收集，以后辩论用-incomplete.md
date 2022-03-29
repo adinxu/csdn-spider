@@ -5,6 +5,7 @@ categories:
 tags:
   - 逻辑
 ---
+{% include toc %}
 
 # 逻辑谬误收集，以后辩论用_incomplete
 

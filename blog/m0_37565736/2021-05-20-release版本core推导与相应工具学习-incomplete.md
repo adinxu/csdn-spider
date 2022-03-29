@@ -7,6 +7,7 @@ tags:
   - 数据结构
   - 算法
 ---
+{% include toc %}
 
 # release版本core推导与相应工具学习_incomplete
 
