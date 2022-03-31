@@ -64,9 +64,9 @@ class CSDN(object):
 		self.TaskQueue = list()
 		self.folder_name = folder_name
 		self.title=''
-		self.nickname=''
-		self.cdate=''
-		self.ctime=''
+		#self.nickname=''#博客名称
+		#self.mdate=''#修改日期
+		#self.mtime=''#修改时间
 		self.classify=[]
 		self.tags=[]
 
@@ -84,13 +84,15 @@ class CSDN(object):
 				soup = BeautifulSoup(html, "html.parser")
 				articles = soup.find_all('div', attrs={"class":"article-item-box csdn-tracking-statistics"})
 				gettitle=re.compile("(?<= )\S+")
+				getctime=re.compile('\d\d\d\d-\d\d-\d\d')
 				for article in articles:
 					article_title = gettitle.search(article.a.text).group()
 					article_href = article.a['href']
-					self.TaskQueue.append((article_title, article_href))
+					article_createdate = getctime.search(article.select_one('span.date').text).group()
+					self.TaskQueue.append((article_title, article_href,article_createdate))
 		else:
 			#调试单篇文章的获取内容
-			self.TaskQueue.append(("重定向与管道符", "https://blog.csdn.net/m0_37565736/article/details/80385398"))
+			self.TaskQueue.append(("重定向与管道符", "https://blog.csdn.net/m0_37565736/article/details/80385398",'2022-01-01'))
 	
 	def get_md(self, url):
 		response = self.s.get(url=url, headers=self.headers)
@@ -99,10 +101,10 @@ class CSDN(object):
 		content = soup.select_one("#mainBox > main > div.blog-content-box")
 		self.title=soup.select_one("h1.title-article").string
 		self.title = re.sub(r'[_\/:*?"<>|\n]','-', self.title)
-		self.nickname=soup.select_one("a.follow-nickName").string
-		createtime=soup.select_one("span.time").string
-		self.cdate=re.search("\d\d\d\d-\d\d-\d\d",createtime).group()
-		self.ctime=re.search("\d\d:\d\d:\d\d",createtime).group()
+		#self.nickname=soup.select_one("a.follow-nickName").string
+		#createtime=soup.select_one("span.time").string
+		#self.mdate=re.search("\d\d\d\d-\d\d-\d\d",createtime).group()
+		#self.mtime=re.search("\d\d:\d\d:\d\d",createtime).group()
 		candt=soup.select("a.tag-link") 
 		self.classify.clear()
 		self.tags.clear()
@@ -134,7 +136,7 @@ class CSDN(object):
 			md += "  - {}\n".format(tag)
 		md += '-'*3+'\n'
 		#添加目录
-		md += '{% include toc %}\n'
+		#md += '{% include toc %}\n'
 		# 转换为markdown
 		md += Tomd(str(content)).markdown
 		return md
@@ -151,7 +153,7 @@ class CSDN(object):
 				readme_head = "# " + self.username + " 的博文\n"
 				reademe_file.write(readme_head)
 				self.TaskQueue.reverse()
-				for (article_title,article_href) in self.TaskQueue:
+				for (article_title,article_href,time) in self.TaskQueue:
 						text = str(url_num) + '. [' + article_title + ']('+ article_href +')\n'
 						reademe_file.write(text)
 						url_num += 1
@@ -159,13 +161,13 @@ class CSDN(object):
 			pass
 	
 	def get_all_articles(self):
-		listlen=list(self.TaskQueue)
+		listlen=len(self.TaskQueue)
 		currnum=1
 		while len(self.TaskQueue) > 0:
-			(article_title,article_href) = self.TaskQueue.pop()
+			(article_title,article_href,article_createtime) = self.TaskQueue.pop()
 			md = self.get_md(article_href)
-			#适配jekll文件名
-			file_name = self.cdate + '-' + self.title + ".md"
+			#适配jekll文件名,使用创建时间作为文件名第一部分
+			file_name = article_createtime + '-' + self.title + ".md"
 			print("[++++] 正在第{0}/{1}处理文章:{2}".format(currnum,listlen,file_name))
 			artical_path = result_file(folder_username=self.username, file_name=file_name, folder_name=self.folder_name)
 			with open(artical_path, "w", encoding="utf-8") as artical_file:

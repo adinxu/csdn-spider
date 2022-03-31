@@ -10,7 +10,6 @@ tags:
   - codeblocks
   - 环境配置
 ---
-{% include toc %}
 
 # codeblocks下wxWidgets编译与配置
 

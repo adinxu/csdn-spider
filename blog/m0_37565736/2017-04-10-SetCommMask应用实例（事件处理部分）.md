@@ -6,7 +6,6 @@ tags:
   - SetCommMask
   - 实例
 ---
-{% include toc %}
 
 # SetCommMask应用实例（事件处理部分）
 

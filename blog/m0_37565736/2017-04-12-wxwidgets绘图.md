@@ -10,7 +10,6 @@ tags:
   - 设备上下文
   - bitmap
 ---
-{% include toc %}
 
 # wxwidgets绘图
 

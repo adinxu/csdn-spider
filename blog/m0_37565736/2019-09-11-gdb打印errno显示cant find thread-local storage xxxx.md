@@ -6,7 +6,6 @@ tags:
   - cant find thread-local storage
   - errno
 ---
-{% include toc %}
 
 # gdb打印errno显示cant find thread-local storage xxxx
 

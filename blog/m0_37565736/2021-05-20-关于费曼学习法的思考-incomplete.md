@@ -5,7 +5,6 @@ categories:
 tags:
   - 学习
 ---
-{% include toc %}
 
 # 关于费曼学习法的思考_incomplete
 

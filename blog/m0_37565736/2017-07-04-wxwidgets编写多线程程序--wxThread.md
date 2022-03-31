@@ -8,7 +8,6 @@ tags:
   - wxthread
   - wxwidgets
 ---
-{% include toc %}
 
 # wxwidgets编写多线程程序--wxThread
 

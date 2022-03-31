@@ -8,7 +8,6 @@ tags:
   - wxwidgets
   - 自定义事件
 ---
-{% include toc %}
 
 # wxwidgets事件处理
 
