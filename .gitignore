@@ -102,3 +102,4 @@ cookie.txt
 
 # mypy
 .mypy_cache/
+.vscode/
